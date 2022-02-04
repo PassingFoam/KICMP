@@ -9,7 +9,7 @@ import (
 const ProtocolICMP = 1
 
 func (s *ICMPSession) defaultReadLoop() {
-	buf := make([]byte, mtuLimit + 8)
+	buf := make([]byte, mtuLimit+8)
 	var src string
 	for {
 		if n, addr, err := s.conn.ReadFrom(buf); err == nil {
@@ -30,10 +30,10 @@ func (s *ICMPSession) defaultReadLoop() {
 }
 
 func (l *Listener) defaultMonitor() {
-	buf := make([]byte, mtuLimit + 8)
+	buf := make([]byte, mtuLimit+8)
 	for {
 		if n, from, err := l.conn.ReadFrom(buf); err == nil {
-
+			//fmt.Println(string(buf[:n]))
 			l.packetInput(buf[:n], from)
 		} else {
 			l.notifyReadError(errors.WithStack(err))

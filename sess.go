@@ -113,7 +113,7 @@ type (
 		xconn           batchConn // for x/net
 		xconnWriteError error
 
-		icmpProto      ipv4.ICMPType
+		icmpProto ipv4.ICMPType
 
 		mu sync.Mutex
 	}
@@ -669,11 +669,11 @@ func (s *ICMPSession) packetInput(data []byte) {
 	//echoId := int(binary.BigEndian.Uint16(data[4:6]))
 	//echoSeq := int(binary.BigEndian.Uint16(data[6:8]))
 	msg, err := icmp.ParseMessage(ProtocolICMP, data)
-	if err != nil{
+	if err != nil {
 		return
 	}
 	body, err := msg.Body.Marshal(ProtocolICMP)
-	if err != nil{
+	if err != nil {
 		return
 	}
 
@@ -820,16 +820,15 @@ type (
 func (l *Listener) packetInput(data []byte, addr net.Addr) {
 
 	msg, err := icmp.ParseMessage(ProtocolICMP, data)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	body, err := msg.Body.Marshal(ProtocolICMP)
-	if err != nil{
+	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 
 	echoId := int(binary.BigEndian.Uint16(body[0:2]))
 	echoSeq := int(binary.BigEndian.Uint16(body[2:4]))
@@ -883,7 +882,7 @@ func (l *Listener) packetInput(data []byte, addr net.Addr) {
 
 		if s == nil && convRecovered { // new session
 			if len(l.chAccepts) < cap(l.chAccepts) { // do not let the new sessions overwhelm accept queue
-				s := newICMPSession(conv, l.dataShards, l.parityShards, l, l.conn, false, addr, l.block,ipv4.ICMPTypeEchoReply)
+				s := newICMPSession(conv, l.dataShards, l.parityShards, l, l.conn, false, addr, l.block, ipv4.ICMPTypeEchoReply)
 				s.seq = echoSeq
 				s.id = echoId
 				s.kcpInput(data)
@@ -1088,21 +1087,22 @@ func DialWithOptions(raddr string, block BlockCrypt, dataShards, parityShards in
 		return nil, errors.WithStack(err)
 	}
 	network := "ip4:icmp"
+	laddr := net.IPAddr{IP: net.ParseIP("0.0.0.0")}
 
-
-	conn, err := icmp.ListenPacket(network, "0.0.0.0")
+	conn, err := net.DialIP(network, &laddr, icmpaddr)
+	//conn, err := icmp.ListenPacket(network, "0.0.0.0")
 	if err != nil {
 		return nil, errors.WithStack(err)
 	}
 
 	var convid uint32
 	binary.Read(rand.Reader, binary.LittleEndian, &convid)
-	return newICMPSession(convid, dataShards, parityShards, nil, conn, true, icmpaddr, block,ipv4.ICMPTypeEcho), nil
+	return newICMPSession(convid, dataShards, parityShards, nil, conn, true, icmpaddr, block, ipv4.ICMPTypeEcho), nil
 }
 
 // NewConn3 establishes a session and talks KCP protocol over a packet connection.
 func NewConn3(convid uint32, raddr net.Addr, block BlockCrypt, dataShards, parityShards int, conn net.PacketConn) (*ICMPSession, error) {
-	return newICMPSession(convid, dataShards, parityShards, nil, conn, false, raddr, block,ipv4.ICMPTypeEcho), nil
+	return newICMPSession(convid, dataShards, parityShards, nil, conn, false, raddr, block, ipv4.ICMPTypeEcho), nil
 }
 
 // NewConn2 establishes a session and talks KCP protocol over a packet connection.
